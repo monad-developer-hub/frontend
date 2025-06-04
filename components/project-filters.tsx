@@ -17,11 +17,11 @@ export function ProjectFilters() {
 
   const events = [
     { id: "mission-1", label: "Mission: 1 Crazy Contract" },
-    { id: "mission-2", label: "Mission: 2 Smart Wallet" },
-    { id: "mission-3", label: "Mission: 3 DeFi Integration" },
-    { id: "mission-4", label: "Mission: 4 NFT Marketplace" },
-    { id: "hackathon-2023", label: "Hackathon 2023" },
-    { id: "hackathon-2024", label: "Hackathon 2024" },
+    { id: "mission-2", label: "Mission: 2 MCP Madness" },
+    { id: "mission-3", label: "Mission: 3 Break Monad V2" },
+    { id: "mission-4", label: "Mission: 4 Visualizer & Dashboard" },
+    { id: "hackathon", label: "Hackathon" },
+    { id: "free-will", label: "Free Will!!!" },
   ]
 
   return (

@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Github, Menu } from "lucide-react"
 import { RegistrationDialog } from "./registration-dialog"
+import { SubmissionTracker } from "./submission-tracker"
 import { useState } from "react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
@@ -99,7 +100,8 @@ export function Header({ activeTab }: HeaderProps) {
             
           </div>
 
-          <div className="hidden sm:block">
+          <div className="hidden sm:flex items-center gap-2">
+            <SubmissionTracker />
             <RegistrationDialog />
           </div>
 

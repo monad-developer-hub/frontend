@@ -19,10 +19,12 @@ import {
   PlayCircle,
   Trophy,
   Twitter,
+  Loader2,
 } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { api, handleApiError, type Project, type ProjectsResponse } from "@/lib/api"
 
 const projects = [
   {
@@ -115,7 +117,7 @@ const projects = [
     logo: "/placeholder.svg?height=40&width=40",
     description: "Governance platform for Monad ecosystem projects with proposal creation and voting mechanisms.",
     categories: ["Infrastructure", "DeFi"],
-    event: "Hackathon 2023",
+    event: "Hackathon",
     award: "Winner",
     team: [
       { name: "James", image: "/placeholder.svg?height=40&width=40", twitter: "james_dao" },
@@ -155,7 +157,7 @@ const projects = [
     logo: "/placeholder.svg?height=40&width=40",
     description: "Lending and borrowing protocol with dynamic interest rates and multi-collateral support.",
     categories: ["DeFi"],
-    event: "Hackathon 2024",
+    event: "Hackathon",
     award: "Winner",
     team: [
       { name: "Daniel", image: "/placeholder.svg?height=40&width=40", twitter: "daniel_defi" },
@@ -215,7 +217,7 @@ const projects = [
     logo: "/placeholder.svg?height=40&width=40",
     description: "Analytics dashboard for tracking on-chain metrics and project performance.",
     categories: ["Infrastructure", "DeFi"],
-    event: "Hackathon 2023",
+    event: "Hackathon",
     award: "Runner-up",
     team: [
       { name: "Andrew", image: "/placeholder.svg?height=40&width=40", twitter: "andrew_data" },
@@ -234,11 +236,63 @@ const projects = [
 export function ProjectTable() {
   const [currentPage, setCurrentPage] = useState(1)
   const [projectsPerPage, setProjectsPerPage] = useState(5)
-  const totalPages = Math.ceil(projects.length / projectsPerPage)
+  const [apiProjects, setApiProjects] = useState<Project[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [totalProjects, setTotalProjects] = useState(0)
+  const [likedProjects, setLikedProjects] = useState<Set<number>>(new Set())
 
-  const indexOfLastProject = currentPage * projectsPerPage
-  const indexOfFirstProject = indexOfLastProject - projectsPerPage
-  const currentProjects = projects.slice(indexOfFirstProject, indexOfLastProject)
+  const totalPages = Math.ceil(totalProjects / projectsPerPage)
+
+  useEffect(() => {
+    loadProjects()
+  }, [currentPage, projectsPerPage])
+
+  const loadProjects = async () => {
+    setIsLoading(true)
+    setError("")
+    
+    try {
+      const response = await api.getProjects({
+        page: currentPage || 1,
+        limit: projectsPerPage || 5,
+        sortBy: 'likes',
+        sortOrder: 'desc'
+      })
+      
+      setApiProjects(response.projects)
+      setTotalProjects(response.pagination.total)
+    } catch (error) {
+      console.error("Error loading projects:", error)
+      setError(handleApiError(error))
+      setApiProjects([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleLike = async (projectId: number) => {
+    try {
+      const response = await api.likeProject(projectId)
+      
+      // Update local state
+      setLikedProjects(prev => new Set([...prev, projectId]))
+      
+      // Update project likes count
+      setApiProjects(prev => prev.map(project => 
+        project.id === projectId 
+          ? { ...project, likes: response.likes }
+          : project
+      ))
+    } catch (error) {
+      console.error("Error liking project:", error)
+    }
+  }
+
+  // Use API projects if loaded successfully, otherwise fall back to mock data
+  const usingApiData = !isLoading && !error && apiProjects !== null
+  const currentProjects = usingApiData ? apiProjects : projects.slice((currentPage - 1) * projectsPerPage, currentPage * projectsPerPage)
+  const actualTotalPages = usingApiData ? totalPages : Math.ceil(projects.length / projectsPerPage)
 
   const handlePageSizeChange = (value: string) => {
     const newSize = Number.parseInt(value)
@@ -270,8 +324,67 @@ export function ProjectTable() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="w-full">
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
+            <span className="text-gray-400">Loading projects...</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="w-full">
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-6 max-w-md">
+            <p className="text-red-400 mb-2">Failed to load projects</p>
+            <p className="text-gray-400 text-sm mb-4">{error}</p>
+            <Button onClick={loadProjects} variant="outline" size="sm">
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (currentProjects.length === 0 && !isLoading) {
+    return (
+      <div className="w-full">
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 max-w-md">
+            <p className="text-gray-300 mb-2">No projects found</p>
+            <p className="text-gray-400 text-sm">
+              {usingApiData 
+                ? "No projects have been approved yet. Submit your project to be the first!"
+                : "No projects match your current filters. Try adjusting them or check back later."}
+            </p>
+            {usingApiData && (
+              <p className="text-gray-500 text-xs mt-2">
+                Note: Projects are shown after admin approval. Demo data is displayed when API is unavailable.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full">
+      {/* Data Source Indicator */}
+      {!usingApiData && currentProjects.length > 0 && (
+        <div className="mb-4 bg-blue-900/20 border border-blue-500/50 rounded-lg p-3">
+          <p className="text-blue-400 text-sm">
+            📊 Showing demo data - API returned no approved projects yet. Submit your project to see it here!
+          </p>
+        </div>
+      )}
       {/* Mobile Card View */}
       <div className="block md:hidden space-y-4">
         {currentProjects.map((project) => (
@@ -565,11 +678,21 @@ export function ProjectTable() {
           </div>
 
           {/* Page Info */}
-          <div className="text-sm text-gray-400 text-center">
-            Showing <span className="font-medium">{indexOfFirstProject + 1}</span> to{" "}
-            <span className="font-medium">{Math.min(indexOfLastProject, projects.length)}</span> of{" "}
-            <span className="font-medium">{projects.length}</span> projects
-          </div>
+                      <div className="text-sm text-gray-400 text-center">
+              {usingApiData ? (
+                <>
+                  Showing <span className="font-medium">{Math.min((currentPage - 1) * projectsPerPage + 1, totalProjects)}</span> to{" "}
+                  <span className="font-medium">{Math.min(currentPage * projectsPerPage, totalProjects)}</span> of{" "}
+                  <span className="font-medium">{totalProjects}</span> projects
+                </>
+              ) : (
+                <>
+                  Showing <span className="font-medium">{(currentPage - 1) * projectsPerPage + 1}</span> to{" "}
+                  <span className="font-medium">{Math.min(currentPage * projectsPerPage, projects.length)}</span> of{" "}
+                  <span className="font-medium">{projects.length}</span> projects (demo data)
+                </>
+              )}
+            </div>
 
           {/* Navigation Controls */}
           <div className="flex items-center justify-center gap-1">
@@ -594,13 +717,13 @@ export function ProjectTable() {
               <span className="sr-only">Previous page</span>
             </Button>
             <div className="flex items-center px-3 py-1 text-sm">
-              Page {currentPage} of {totalPages}
+              Page {currentPage} of {actualTotalPages}
             </div>
             <Button
               variant="outline"
               size="icon"
               onClick={() => setCurrentPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
+              disabled={currentPage === actualTotalPages}
               className="h-8 w-8"
             >
               <ChevronRight className="h-3 w-3" />
@@ -609,8 +732,8 @@ export function ProjectTable() {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(actualTotalPages)}
+              disabled={currentPage === actualTotalPages}
               className="h-8 w-8"
             >
               <ChevronsRight className="h-3 w-3" />
