@@ -233,6 +233,18 @@ const projects = [
   },
 ]
 
+const getCategoryBorderColor = (category: string) => {
+  const colors: Record<string, string> = {
+    'DeFi': 'border-green-500/50 text-green-400',
+    'Infrastructure': 'border-blue-500/50 text-blue-400',
+    'Gaming': 'border-pink-500/50 text-pink-400',
+    'Consumer': 'border-orange-500/50 text-orange-400',
+    'NFT': 'border-cyan-500/50 text-cyan-400',
+    'AI': 'border-red-500/50 text-red-400',
+  }
+  return colors[category] || 'border-purple-500/50 text-purple-400'
+}
+
 export function ProjectTable() {
   const [currentPage, setCurrentPage] = useState(1)
   const [projectsPerPage, setProjectsPerPage] = useState(10)
@@ -313,14 +325,53 @@ export function ProjectTable() {
       case "Runner-up":
         return (
           <div className="flex items-center gap-1">
-            <Trophy className="h-3 w-3 text-gray-400" />
-            <span className="font-medium text-gray-400 text-xs">Runner-up</span>
+            <Trophy className="h-3 w-3 text-gray-300" />
+            <span className="font-medium text-gray-300 text-xs">Runner-up</span>
+          </div>
+        )
+      case "3rd Place":
+        return (
+          <div className="flex items-center gap-1">
+            <Trophy className="h-3 w-3 text-amber-600" />
+            <span className="font-medium text-amber-600 text-xs">3rd Place</span>
+          </div>
+        )
+      case "4th Place":
+        return (
+          <div className="flex items-center gap-1">
+            <Trophy className="h-3 w-3 text-blue-400" />
+            <span className="font-medium text-blue-400 text-xs">4th Place</span>
+          </div>
+        )
+      case "5th Place":
+        return (
+          <div className="flex items-center gap-1">
+            <Trophy className="h-3 w-3 text-green-400" />
+            <span className="font-medium text-green-400 text-xs">5th Place</span>
           </div>
         )
       case "Finalist":
-        return <Badge className="bg-purple-600 text-xs px-1 py-0">Finalist</Badge>
+        return (
+          <div className="flex items-center gap-1">
+            <Trophy className="h-3 w-3 text-purple-400" />
+            <span className="font-medium text-purple-400 text-xs">Finalist</span>
+          </div>
+        )
+      case "Honorable Mention":
+        return (
+          <div className="flex items-center gap-1">
+            <Trophy className="h-3 w-3 text-indigo-400" />
+            <span className="font-medium text-indigo-400 text-xs">Honorable Mention</span>
+          </div>
+        )
       default:
-        return <span className="text-gray-400 text-xs">{award}</span>
+        return (
+          <div className="flex items-center justify-center">
+            <Heart className="h-3 w-3 text-purple-500" />
+            <Heart className="h-3 w-3 text-purple-500" />
+            <Heart className="h-3 w-3 text-purple-500" />
+          </div>
+        )
     }
   }
 
@@ -401,7 +452,7 @@ export function ProjectTable() {
                 <h3 className="font-medium text-white truncate">{project.name}</h3>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {project.categories.slice(0, 2).map((category) => (
-                    <Badge key={category} variant="outline" className="border-purple-500/50 text-xs px-1 py-0">
+                    <Badge key={category} variant="outline" className={`${getCategoryBorderColor(category)} text-xs px-1 py-0`}>
                       {category}
                     </Badge>
                   ))}
@@ -537,7 +588,7 @@ export function ProjectTable() {
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {project.categories.slice(0, 2).map((category) => (
-                        <Badge key={category} variant="outline" className="border-purple-500/50 text-xs px-1 py-0">
+                        <Badge key={category} variant="outline" className={`${getCategoryBorderColor(category)} text-xs px-1 py-0`}>
                           {category}
                         </Badge>
                       ))}

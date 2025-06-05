@@ -216,11 +216,15 @@ export default function AdminPage() {
     setIsSubmitting(true)
     try {
       const { api } = await import("@/lib/api")
+      
+      // Filter out team photos with empty URLs to avoid overwriting existing photos
+      const validTeamPhotos = projectExtras.teamPhotos.filter(tp => tp.photoUrl && tp.photoUrl.trim() !== "")
+      
       const data = await api.updateProjectExtras(
         selectedSubmission.submissionId,
         {
           award: projectExtras.award || undefined,
-          teamPhotos: projectExtras.teamPhotos.filter(tp => tp.photoUrl)
+          teamPhotos: validTeamPhotos
         }
       )
 
