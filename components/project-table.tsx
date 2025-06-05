@@ -20,6 +20,7 @@ import {
   Trophy,
   Twitter,
   Loader2,
+  MoreHorizontal,
 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
@@ -245,6 +246,50 @@ const getCategoryBorderColor = (category: string) => {
   return colors[category] || 'border-purple-500/50 text-purple-400'
 }
 
+const TruncatedDescription = ({ description, projectName, isMobile = false }: { description: string, projectName: string, isMobile?: boolean }) => {
+  // Simple check - if description is longer than typical truncation length, show expand button
+  const shouldTruncate = description.length > (isMobile ? 100 : 80)
+  
+  if (!shouldTruncate) {
+    return (
+      <div className={`text-gray-400 text-sm ${isMobile ? 'mb-3' : ''}`}>
+        {description}
+      </div>
+    )
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <div className={`text-gray-400 text-sm ${isMobile ? 'mb-3' : ''} cursor-pointer transition-all group relative overflow-hidden rounded`}>
+          <div className={isMobile ? 'line-clamp-2' : 'truncate'}>
+            {description}
+          </div>
+          {/* Gradient shadow overlay with "read more" text */}
+          <div 
+            className="absolute inset-0 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center"
+            style={{
+              background: 'radial-gradient(circle at center, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.2) 70%, rgba(0,0,0,0.1) 100%)'
+            }}
+          >
+            <span className="text-white text-xs font-medium px-2 py-1 bg-purple-600/90 rounded-md shadow-lg">
+              Read more
+            </span>
+          </div>
+        </div>
+      </DialogTrigger>
+      <DialogContent className="border-gray-800 bg-gray-950 sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{projectName} - Full Description</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <p className="text-gray-300 leading-relaxed">{description}</p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export function ProjectTable() {
   const [currentPage, setCurrentPage] = useState(1)
   const [projectsPerPage, setProjectsPerPage] = useState(10)
@@ -461,7 +506,11 @@ export function ProjectTable() {
               <div className="flex-shrink-0">{renderAwardBadge(project.award)}</div>
             </div>
 
-            <p className="text-gray-400 text-sm mb-3 line-clamp-2">{project.description}</p>
+            <TruncatedDescription 
+              description={project.description} 
+              projectName={project.name}
+              isMobile={true}
+            />
 
             <div className="flex items-center justify-between mb-3">
               <div className="relative">
@@ -481,13 +530,13 @@ export function ProjectTable() {
               </div>
               <div className="flex -space-x-1">
                 {project.team.slice(0, 3).map((member, index) => (
-                  <Avatar key={index} className="h-6 w-6 border-2 border-gray-950">
+                  <Avatar key={index} className="h-8 w-8 border-2 border-gray-950">
                     <AvatarImage src={member.image || "/placeholder.svg"} alt={member.name} />
                     <AvatarFallback className="text-xs">{member.name[0]}</AvatarFallback>
                   </Avatar>
                 ))}
                 {project.team.length > 3 && (
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-gray-950 bg-gray-800 text-xs">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-gray-950 bg-gray-800 text-xs">
                     +{project.team.length - 3}
                   </div>
                 )}
@@ -583,7 +632,11 @@ export function ProjectTable() {
                     </div>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell max-w-xs">
-                    <div className="truncate text-gray-400 text-sm">{project.description}</div>
+                    <TruncatedDescription 
+                      description={project.description} 
+                      projectName={project.name}
+                      isMobile={false}
+                    />
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
@@ -609,7 +662,7 @@ export function ProjectTable() {
                                 target="_blank"
                                 className="block transition-transform hover:scale-105"
                               >
-                                <Avatar className="h-6 w-6 border-2 border-black">
+                                <Avatar className="h-8 w-8 border-2 border-black">
                                   <AvatarImage src={member.image || "/placeholder.svg"} alt={member.name} />
                                   <AvatarFallback className="text-xs">{member.name[0]}</AvatarFallback>
                                 </Avatar>
@@ -623,7 +676,7 @@ export function ProjectTable() {
                         </TooltipProvider>
                       ))}
                       {project.team.length > 2 && (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-black bg-gray-800 text-xs">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-black bg-gray-800 text-xs">
                           +{project.team.length - 2}
                         </div>
                       )}
