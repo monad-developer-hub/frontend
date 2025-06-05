@@ -235,7 +235,7 @@ const projects = [
 
 export function ProjectTable() {
   const [currentPage, setCurrentPage] = useState(1)
-  const [projectsPerPage, setProjectsPerPage] = useState(5)
+  const [projectsPerPage, setProjectsPerPage] = useState(10)
   const [apiProjects, setApiProjects] = useState<Project[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
@@ -255,7 +255,7 @@ export function ProjectTable() {
     try {
       const response = await api.getProjects({
         page: currentPage || 1,
-        limit: projectsPerPage || 5,
+        limit: projectsPerPage || 10,
         sortBy: 'likes',
         sortOrder: 'desc'
       })

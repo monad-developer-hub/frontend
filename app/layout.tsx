@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TransactionProvider } from "@/contexts/transaction-context"
 import { AnalyticsProvider } from "@/contexts/analytics-context"
+import { AuthProvider } from "@/contexts/AuthContext"
 import { Suspense } from "react"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -23,11 +24,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <AnalyticsProvider>
-            <Suspense fallback={null}>
-              <TransactionProvider>{children}</TransactionProvider>
-            </Suspense>
-          </AnalyticsProvider>
+          <AuthProvider>
+            <AnalyticsProvider>
+              <Suspense fallback={null}>
+                <TransactionProvider>{children}</TransactionProvider>
+              </Suspense>
+            </AnalyticsProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

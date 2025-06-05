@@ -76,6 +76,30 @@ export interface SubmissionStatus {
   }
 }
 
+export interface SubmissionsResponse {
+  success: boolean
+  submissions: any[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+  stats: Record<string, number>
+}
+
+export interface ReviewRequest {
+  status: 'pending' | 'under_review' | 'approved' | 'rejected' | 'requires_changes'
+  feedback?: string
+  changesRequested?: string[]
+  reviewerId: number
+}
+
+export interface ProjectExtrasRequest {
+  award?: string
+  teamPhotos?: { memberName: string; photoUrl: string }[]
+}
+
 export interface ProjectsResponse {
   projects: Project[]
   pagination: {
@@ -101,17 +125,30 @@ export interface AnalyticsStats {
 
 // Generic API client
 class ApiClient {
+  private getAuthHeaders(): Record<string, string> {
+    const token = localStorage.getItem('admin_token')
+    return token ? { 'Authorization': `Bearer ${token}` } : {}
+  }
+
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    requireAuth = false
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`
     
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string>),
+    }
+
+    // Add auth headers for authenticated requests
+    if (requireAuth) {
+      Object.assign(headers, this.getAuthHeaders())
+    }
+    
     const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
       ...options,
     }
 
@@ -214,6 +251,44 @@ class ApiClient {
     })
 
     return this.request(`/analytics/contracts/top?${searchParams}`)
+  }
+
+  // Admin: Get all submissions
+  async getSubmissions(status?: string, page = 1, limit = 10): Promise<SubmissionsResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString()
+    })
+    
+    if (status && status !== 'all') {
+      params.append('status', status)
+    }
+    
+    return this.request<SubmissionsResponse>(`/submissions?${params}`)
+  }
+
+  // Admin: Review submission
+  async reviewSubmission(submissionId: string, reviewData: ReviewRequest): Promise<any> {
+    return this.request(`/submissions/${submissionId}/review`, {
+      method: 'PUT',
+      body: JSON.stringify(reviewData)
+    }, true) // Requires authentication
+  }
+
+  // Admin: Update project extras
+  async updateProjectExtras(submissionId: string, extrasData: ProjectExtrasRequest): Promise<any> {
+    return this.request(`/admin/submissions/${submissionId}/project-extras`, {
+      method: 'PUT',
+      body: JSON.stringify(extrasData)
+    }, true) // Requires authentication
+  }
+
+  // Auth: Change password
+  async changePassword(data: { currentPassword: string; newPassword: string }): Promise<any> {
+    return this.request('/auth/change-password', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }, true) // Requires authentication
   }
 }
 
