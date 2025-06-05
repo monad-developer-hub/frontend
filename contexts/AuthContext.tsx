@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
+
 interface AuthContextType {
   isAuthenticated: boolean
   login: (password: string) => Promise<boolean>
@@ -43,7 +45,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const verifyToken = async (tokenToVerify: string): Promise<boolean> => {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/auth/verify', {
+      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${tokenToVerify}`,
@@ -73,7 +75,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (password: string): Promise<boolean> => {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
