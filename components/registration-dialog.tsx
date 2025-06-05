@@ -53,7 +53,7 @@ const events = [
   "Mission: 3 Break Monad V2",
   "Mission: 4 Visualizer & Dashboard",
   "Hackathon",
-  "Free Will!!!",
+  "Passion Project",
 ]
 
 const availableCategories = ["DeFi", "Gaming", "AI", "Infrastructure", "Consumer", "NFT", "Stablecoins"]

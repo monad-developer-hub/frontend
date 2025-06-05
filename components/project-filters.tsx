@@ -21,7 +21,7 @@ export function ProjectFilters() {
     { id: "mission-3", label: "Mission: 3 Break Monad V2" },
     { id: "mission-4", label: "Mission: 4 Visualizer & Dashboard" },
     { id: "hackathon", label: "Hackathon" },
-    { id: "free-will", label: "Free Will!!!" },
+    { id: "free-will", label: "Passion Project" },
   ]
 
   return (
