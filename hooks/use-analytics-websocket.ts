@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8081'
+
 interface UseAnalyticsWebSocketReturn {
   isConnected: boolean
   error: string | null
@@ -31,7 +33,7 @@ export function useAnalyticsWebSocket(): UseAnalyticsWebSocketReturn {
     const connectWebSocket = () => {
       try {
         console.log('Attempting to connect to analytics WebSocket...')
-        const ws = new WebSocket('ws://localhost:8081/ws/analytics')
+        const ws = new WebSocket(`${WS_BASE_URL}/ws/analytics`)
         wsRef.current = ws
         hasConnected.current = true
 
