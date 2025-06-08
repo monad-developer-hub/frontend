@@ -8,11 +8,17 @@ import { TopContracts } from "@/components/top-contracts"
 import { AnalyticsStats } from "@/components/analytics-stats"
 import { useAnalyticsWebSocket } from "@/hooks/use-analytics-websocket"
 import { useTransactions } from "@/contexts/transaction-context"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 
 export default function AnalyzePage() {
   const { isConnected, error, subscribe, unsubscribe } = useAnalyticsWebSocket()
   const { addTransaction } = useTransactions()
+  const lastTxTimeRef = useRef<number>(0)
+  const pendingTxCountRef = useRef<number>(0)
+  const BASE_DELAY_MS = 15 // Base delay between transactions
+  const MAX_DELAY_MS = 20 // Maximum delay when many transactions are pending
+  const MIN_DELAY_MS = 5 // Minimum delay when few transactions are pending
+  const PENDING_TX_THRESHOLD = 100 // Number of pending transactions that triggers delay adjustment
 
   // Process WebSocket data when it arrives
   useEffect(() => {
@@ -45,16 +51,41 @@ export default function AnalyzePage() {
             transactionType = "transfer"
         }
 
-        // Add the transaction to our context
-        addTransaction(
-          transactionType,
-          valueInMonad,
-          txData.fromAddress,
-          txData.toAddress,
-          txData.hash
-        )
+        // Calculate dynamic delay based on pending transactions
+        const now = Date.now()
+        const timeSinceLastTx = now - lastTxTimeRef.current
+        const pendingTxCount = pendingTxCountRef.current
 
-        console.log(`🎯 Added real transaction: ${txData.hash.substring(0, 10)}... (${transactionType}) - Value: ${valueInMonad.toFixed(4)} MONAD`)
+        // Adjust delay based on number of pending transactions
+        let dynamicDelay = BASE_DELAY_MS
+        if (pendingTxCount > PENDING_TX_THRESHOLD) {
+          // When high load (many pending transactions) -> LOWER delay
+          // As pendingTxCount increases, delay decreases
+          dynamicDelay = Math.max(MIN_DELAY_MS, BASE_DELAY_MS * (PENDING_TX_THRESHOLD / pendingTxCount))
+        } else if (pendingTxCount < PENDING_TX_THRESHOLD / 2) {
+          // When low load (few pending transactions) -> HIGHER delay
+          // As pendingTxCount decreases, delay increases
+          dynamicDelay = Math.min(MAX_DELAY_MS, BASE_DELAY_MS * (PENDING_TX_THRESHOLD / pendingTxCount))
+        }
+
+        const delayNeeded = Math.max(0, dynamicDelay - timeSinceLastTx)
+        lastTxTimeRef.current = now + delayNeeded
+
+        // Increment pending transaction count
+        pendingTxCountRef.current++
+
+        // Add the transaction with delay
+        setTimeout(() => {
+          addTransaction(
+            transactionType,
+            valueInMonad,
+            txData.fromAddress,
+            txData.toAddress,
+            txData.hash
+          )
+          // Decrement pending transaction count after adding
+          pendingTxCountRef.current = Math.max(0, pendingTxCountRef.current - 1)
+        }, delayNeeded)
       }
     }
 
