@@ -5,6 +5,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   ChevronLeft,
   ChevronRight,
@@ -21,11 +24,32 @@ import {
   Twitter,
   Loader2,
   MoreHorizontal,
+  Send,
+  Search,
+  X,
 } from "lucide-react"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { api, handleApiError, type Project, type ProjectsResponse } from "@/lib/api"
+
+// Types for feedback system
+interface Feedback {
+  id: string
+  text: string
+  author: string
+  timestamp: Date
+  projectId: number
+}
+
+interface FloatingFeedback {
+  id: string
+  text: string
+  x: number
+  y: number
+  opacity: number
+  scale: number
+}
 
 const projects = [
   {
@@ -37,9 +61,9 @@ const projects = [
     event: "Mission: 1 Crazy Contract",
     award: "Winner",
     team: [
-      { name: "Alex", image: "/placeholder.svg?height=40&width=40", twitter: "alex_dev" },
-      { name: "Sarah", image: "/placeholder.svg?height=40&width=40", twitter: "sarah_blockchain" },
-      { name: "Mike", image: "/placeholder.svg?height=40&width=40", twitter: "mike_monad" },
+      { id: 1, name: "Alex", image: "/placeholder.svg?height=40&width=40", twitter: "alex_dev" },
+      { id: 2, name: "Sarah", image: "/placeholder.svg?height=40&width=40", twitter: "sarah_blockchain" },
+      { id: 3, name: "Mike", image: "/placeholder.svg?height=40&width=40", twitter: "mike_monad" },
     ],
     likes: 145,
     comments: 32,
@@ -48,6 +72,8 @@ const projects = [
     playUrl: "https://monadswap.example.com",
     github: "https://github.com/monadswap",
     website: "https://monadswap.example.com",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z",
   },
   {
     id: 2,
@@ -59,8 +85,8 @@ const projects = [
     event: "Mission: 2 Smart Wallet",
     award: "Runner-up",
     team: [
-      { name: "Jessica", image: "/placeholder.svg?height=40&width=40", twitter: "jessica_nft" },
-      { name: "David", image: "/placeholder.svg?height=40&width=40", twitter: "david_artist" },
+      { id: 4, name: "Jessica", image: "/placeholder.svg?height=40&width=40", twitter: "jessica_nft" },
+      { id: 5, name: "David", image: "/placeholder.svg?height=40&width=40", twitter: "david_artist" },
     ],
     likes: 98,
     comments: 17,
@@ -69,6 +95,8 @@ const projects = [
     playUrl: "https://monadnft.example.com",
     github: "https://github.com/monadnft",
     website: "https://monadnft.example.com",
+    createdAt: "2024-01-02T00:00:00Z",
+    updatedAt: "2024-01-02T00:00:00Z",
   },
   {
     id: 3,
@@ -298,12 +326,29 @@ export function ProjectTable() {
   const [error, setError] = useState("")
   const [totalProjects, setTotalProjects] = useState(0)
   const [likedProjects, setLikedProjects] = useState<Set<number>>(new Set())
+  
+  // Feedback system state
+  const [feedbackData, setFeedbackData] = useState<Record<number, Feedback[]>>({})
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [newFeedback, setNewFeedback] = useState("")
+  const [feedbackSearch, setFeedbackSearch] = useState("")
+  const [feedbackAuthor, setFeedbackAuthor] = useState("")
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false)
+  
+  // Floating feedback animation state
+  const [floatingFeedbacks, setFloatingFeedbacks] = useState<FloatingFeedback[]>([])
+  const animationRef = useRef<number | null>(null)
 
   const totalPages = Math.ceil(totalProjects / projectsPerPage)
 
   useEffect(() => {
     loadProjects()
   }, [currentPage, projectsPerPage])
+
+  useEffect(() => {
+    initializeFeedbackData()
+  }, [])
 
   const loadProjects = async () => {
     setIsLoading(true)
@@ -344,6 +389,104 @@ export function ProjectTable() {
     } catch (error) {
       console.error("Error liking project:", error)
     }
+  }
+
+  // Initialize mock feedback data
+  const initializeFeedbackData = () => {
+    const mockFeedbacks: Record<number, Feedback[]> = {}
+    
+    // Add some sample feedback for each project
+    projects.forEach(project => {
+      const feedbackCount = Math.floor(Math.random() * 5) + 1
+      mockFeedbacks[project.id] = Array.from({ length: feedbackCount }, (_, i) => ({
+        id: `${project.id}-${i}`,
+        text: `Great project! ${["Love the UI", "Amazing concept", "Very innovative", "Excellent execution", "Looking forward to using this"][i % 5]}`,
+        author: `User${Math.floor(Math.random() * 100)}`,
+        timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
+        projectId: project.id
+      }))
+    })
+    
+    setFeedbackData(mockFeedbacks)
+  }
+
+  // Handle feedback submission
+  const handleSubmitFeedback = async () => {
+    if (!selectedProject || !newFeedback.trim() || !feedbackAuthor.trim()) return
+    
+    setIsSubmittingFeedback(true)
+    
+    try {
+      const feedback: Feedback = {
+        id: `${selectedProject.id}-${Date.now()}`,
+        text: newFeedback.trim(),
+        author: feedbackAuthor.trim(),
+        timestamp: new Date(),
+        projectId: selectedProject.id
+      }
+      
+      // Add feedback locally
+      setFeedbackData(prev => ({
+        ...prev,
+        [selectedProject.id]: [...(prev[selectedProject.id] || []), feedback]
+      }))
+      
+      // Update comments count
+      setApiProjects(prev => prev.map(project => 
+        project.id === selectedProject.id 
+          ? { ...project, comments: project.comments + 1 }
+          : project
+      ))
+      
+      // Add floating feedback animation
+      addFloatingFeedback(feedback.text)
+      
+      // Reset form
+      setNewFeedback("")
+      setFeedbackAuthor("")
+      
+    } catch (error) {
+      console.error("Error submitting feedback:", error)
+    } finally {
+      setIsSubmittingFeedback(false)
+    }
+  }
+
+  // Add floating feedback animation
+  const addFloatingFeedback = (text: string) => {
+    const truncatedText = text.length > 30 ? text.substring(0, 30) + "..." : text
+    const newFloatingFeedback: FloatingFeedback = {
+      id: `floating-${Date.now()}`,
+      text: truncatedText,
+      x: Math.random() * (window.innerWidth - 200),
+      y: Math.random() * (window.innerHeight - 100),
+      opacity: 1,
+      scale: 1
+    }
+    
+    setFloatingFeedbacks(prev => [...prev, newFloatingFeedback])
+    
+    // Remove after animation
+    setTimeout(() => {
+      setFloatingFeedbacks(prev => prev.filter(f => f.id !== newFloatingFeedback.id))
+    }, 3000)
+  }
+
+  // Filter feedback based on search
+  const getFilteredFeedback = (projectId: number) => {
+    const projectFeedback = feedbackData[projectId] || []
+    if (!feedbackSearch.trim()) return projectFeedback
+    
+    return projectFeedback.filter(feedback =>
+      feedback.text.toLowerCase().includes(feedbackSearch.toLowerCase()) ||
+      feedback.author.toLowerCase().includes(feedbackSearch.toLowerCase())
+    )
+  }
+
+  // Open feedback dialog
+  const openFeedbackDialog = (project: any) => {
+    setSelectedProject(project as Project)
+    setFeedbackDialogOpen(true)
   }
 
   // Use API projects if loaded successfully, otherwise fall back to mock data
@@ -471,8 +614,173 @@ export function ProjectTable() {
     )
   }
 
+  // Floating feedback component
+  const FloatingFeedbackOverlay = () => (
+    <div className="fixed inset-0 pointer-events-none z-50">
+      {floatingFeedbacks.map((feedback) => (
+        <div
+          key={feedback.id}
+          className="absolute text-white bg-purple-600/90 rounded-lg px-3 py-2 text-sm backdrop-blur-sm shadow-lg border border-purple-500/50 transition-all duration-300"
+          style={{
+            left: feedback.x,
+            top: feedback.y,
+            animation: `floatingFeedback 3s ease-out forwards`
+          }}
+        >
+          ✨ {feedback.text}
+          <style jsx>{`
+            @keyframes floatingFeedback {
+              0% { 
+                opacity: 0; 
+                transform: translateY(20px) scale(0.8); 
+              }
+              10% { 
+                opacity: 1; 
+                transform: translateY(0px) scale(1); 
+              }
+              90% { 
+                opacity: 1; 
+                transform: translateY(-30px) scale(1); 
+              }
+              100% { 
+                opacity: 0; 
+                transform: translateY(-50px) scale(0.9); 
+              }
+            }
+          `}</style>
+        </div>
+      ))}
+    </div>
+  )
+
+  // Feedback Dialog Component
+  const FeedbackDialog = () => (
+    <Dialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen}>
+      <DialogContent className="border-gray-800 bg-gray-950 sm:max-w-2xl max-h-[80vh] overflow-hidden">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3">
+            <div className="h-8 w-8 overflow-hidden rounded bg-gray-800">
+              <img
+                src={selectedProject?.logo || "/placeholder.svg"}
+                alt={selectedProject?.name}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            {selectedProject?.name} - Feedback
+          </DialogTitle>
+        </DialogHeader>
+        
+        <Tabs defaultValue="submit" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-gray-900">
+            <TabsTrigger value="submit" className="data-[state=active]:bg-purple-600">Submit Feedback</TabsTrigger>
+            <TabsTrigger value="view" className="data-[state=active]:bg-purple-600">View All ({(feedbackData[selectedProject?.id || 0] || []).length})</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="submit" className="space-y-4 mt-6">
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Your Name</label>
+                <Input
+                  value={feedbackAuthor}
+                  onChange={(e) => setFeedbackAuthor(e.target.value)}
+                  placeholder="Enter your name..."
+                  className="bg-gray-900 border-gray-700 text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Feedback</label>
+                <Textarea
+                  value={newFeedback}
+                  onChange={(e) => setNewFeedback(e.target.value)}
+                  placeholder="Share your thoughts about this project..."
+                  className="bg-gray-900 border-gray-700 text-white min-h-[120px] resize-none"
+                  rows={5}
+                />
+              </div>
+              
+              <Button 
+                onClick={handleSubmitFeedback}
+                disabled={!newFeedback.trim() || !feedbackAuthor.trim() || isSubmittingFeedback}
+                className="w-full bg-purple-600 hover:bg-purple-700"
+              >
+                {isSubmittingFeedback ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Submit Feedback
+                  </>
+                )}
+              </Button>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="view" className="mt-6">
+            <div className="space-y-4">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  value={feedbackSearch}
+                  onChange={(e) => setFeedbackSearch(e.target.value)}
+                  placeholder="Search feedback..."
+                  className="bg-gray-900 border-gray-700 text-white pl-10"
+                />
+                {feedbackSearch && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFeedbackSearch("")}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              
+              {/* Feedback List */}
+              <div className="max-h-[400px] overflow-y-auto space-y-3">
+                {getFilteredFeedback(selectedProject?.id || 0).length === 0 ? (
+                  <div className="text-center py-8 text-gray-400">
+                    {feedbackSearch ? "No feedback matches your search." : "No feedback yet. Be the first to share your thoughts!"}
+                  </div>
+                ) : (
+                  getFilteredFeedback(selectedProject?.id || 0)
+                    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+                    .map((feedback) => (
+                      <div key={feedback.id} className="bg-gray-900/50 rounded-lg p-4 border border-gray-800">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarFallback className="text-xs bg-purple-600">
+                                {feedback.author[0].toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium text-gray-200">{feedback.author}</span>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {feedback.timestamp.toLocaleDateString()} at {feedback.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </span>
+                        </div>
+                        <p className="text-gray-300 text-sm leading-relaxed">{feedback.text}</p>
+                      </div>
+                    ))
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  )
+
   return (
     <div className="w-full">
+      <FloatingFeedbackOverlay />
       {/* Data Source Indicator */}
       {!usingApiData && currentProjects.length > 0 && (
         <div className="mb-4 bg-blue-900/20 border border-blue-500/50 rounded-lg p-3">
@@ -513,20 +821,28 @@ export function ProjectTable() {
             />
 
             <div className="flex items-center justify-between mb-3">
-              <div className="relative">
-                <div className="flex items-center gap-4 blur-sm">
-                  <div className="flex items-center gap-1">
-                    <Heart className="h-3 w-3 text-gray-400" />
-                    <span className="text-xs text-gray-400">{project.likes}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <MessageSquare className="h-3 w-3 text-gray-400" />
-                    <span className="text-xs text-gray-400">{project.comments}</span>
-                  </div>
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-medium text-white bg-gray-900/80 px-2 py-1 rounded">?</span>
-                </div>
+              <div className="flex items-center gap-4">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleLike(project.id)}
+                  disabled={likedProjects.has(project.id)}
+                  className="flex items-center gap-1 px-2 py-1 h-auto"
+                >
+                  <Heart 
+                    className={`h-3 w-3 transition-colors ${likedProjects.has(project.id) ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-400'}`} 
+                  />
+                  <span className="text-xs text-gray-400">{project.likes}</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => openFeedbackDialog(project)}
+                  className="flex items-center gap-1 px-2 py-1 h-auto"
+                >
+                  <MessageSquare className="h-3 w-3 text-gray-400 hover:text-blue-400" />
+                  <span className="text-xs text-gray-400">{(feedbackData[project.id] || []).length}</span>
+                </Button>
               </div>
               <div className="flex -space-x-1">
                 {project.team.slice(0, 3).map((member, index) => (
@@ -683,20 +999,28 @@ export function ProjectTable() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="relative">
-                      <div className="flex items-center justify-center gap-1 blur-sm">
-                        <div className="flex items-center gap-1">
-                          <Heart className="h-3 w-3 text-gray-400" />
-                          <span className="text-xs text-gray-400">{project.likes}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="h-3 w-3 text-gray-400" />
-                          <span className="text-xs text-gray-400">{project.comments}</span>
-                        </div>
-                      </div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xs font-medium text-white bg-gray-900/80 px-2 py-1 rounded">?</span>
-                      </div>
+                    <div className="flex items-center justify-center gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleLike(project.id)}
+                        disabled={likedProjects.has(project.id)}
+                        className="flex items-center gap-1 px-2 py-1 h-auto"
+                      >
+                        <Heart 
+                          className={`h-3 w-3 transition-colors ${likedProjects.has(project.id) ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-400'}`} 
+                        />
+                        <span className="text-xs text-gray-400">{project.likes}</span>
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => openFeedbackDialog(project)}
+                        className="flex items-center gap-1 px-2 py-1 h-auto"
+                      >
+                        <MessageSquare className="h-3 w-3 text-gray-400 hover:text-blue-400" />
+                        <span className="text-xs text-gray-400">{(feedbackData[project.id] || []).length}</span>
+                      </Button>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -846,6 +1170,9 @@ export function ProjectTable() {
           </div>
         </div>
       </div>
+      
+      {/* Feedback Dialog */}
+      <FeedbackDialog />
     </div>
   )
 }

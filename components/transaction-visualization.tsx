@@ -7,7 +7,7 @@ import { useTransactions } from "@/contexts/transaction-context"
 export function TransactionVisualization() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number | undefined>(undefined)
   const lastUpdateTimeRef = useRef<number>(0)
   const { visualizationTransactions, setVisualizationDimensions, updateVisualizationTransactions } = useTransactions()
 

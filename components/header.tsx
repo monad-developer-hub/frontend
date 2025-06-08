@@ -6,7 +6,8 @@ import { Github, Menu } from "lucide-react"
 import { RegistrationDialog } from "./registration-dialog"
 import { SubmissionTracker } from "./submission-tracker"
 import { useState } from "react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { VisuallyHidden } from "@/components/ui/visually-hidden"
 
 interface HeaderProps {
   activeTab?: "projects" | "analyze"
@@ -129,6 +130,9 @@ export function Header({ activeTab }: HeaderProps) {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[80%] sm:w-[350px] border-gray-800 bg-gray-950 p-0">
+              <VisuallyHidden>
+                <SheetTitle>Navigation Menu</SheetTitle>
+              </VisuallyHidden>
               <div className="flex flex-col h-full">
                 <div className="p-4 border-b border-gray-800">
                   <div className="flex items-center gap-2">

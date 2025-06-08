@@ -6,7 +6,7 @@ import { createContext, useContext, useState, useCallback, useEffect, useRef } f
 interface Transaction {
   id: string
   hash: string
-  type: "transfer" | "swap" | "mint" | "burn" | "stake"
+  type: "transfer" | "swap" | "mint" | "burn" | "stake" | "other"
   from: string
   to: string
   value: number
@@ -16,7 +16,7 @@ interface Transaction {
 interface VisualizationTransaction {
   id: string
   timestamp: number
-  type: "transfer" | "swap" | "mint" | "burn" | "stake"
+  type: "transfer" | "swap" | "mint" | "burn" | "stake" | "other"
   value: number
   x: number
   y: number
@@ -29,7 +29,7 @@ interface VisualizationTransaction {
 interface TransactionContextType {
   transactions: Transaction[]
   visualizationTransactions: VisualizationTransaction[]
-  addTransaction: (type: Transaction["type"], value: number, from?: string, to?: string) => void
+  addTransaction: (type: Transaction["type"], value: number, from?: string, to?: string, hash?: string) => void
   setVisualizationDimensions: (width: number, height: number) => void
   updateVisualizationTransactions: (updater: (prev: VisualizationTransaction[]) => VisualizationTransaction[]) => void
 }
@@ -43,9 +43,8 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [visualizationTransactions, setVisualizationTransactions] = useState<VisualizationTransaction[]>([])
   const [dimensions, setDimensions] = useState({ width: 800, height: 300 })
-  const intervalRef = useRef<NodeJS.Timeout>()
-  const cleanupIntervalRef = useRef<NodeJS.Timeout>()
-  const addTransactionRef = useRef<typeof addTransaction>()
+  const cleanupIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  const addTransactionRef = useRef<typeof addTransaction | undefined>(undefined)
 
   const setVisualizationDimensions = useCallback((width: number, height: number) => {
     setDimensions({ width, height })
@@ -65,9 +64,9 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
   }, [])
 
   const addTransaction = useCallback(
-    (type: Transaction["type"], value: number, from?: string, to?: string) => {
+    (type: Transaction["type"], value: number, from?: string, to?: string, hash?: string) => {
       const now = Date.now()
-      const hash = Array.from({ length: 64 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join("")
+      const txHash = hash || Array.from({ length: 64 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join("")
       const fromAddress =
         from || `0x${Array.from({ length: 40 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join("")}`
       const toAddress =
@@ -76,7 +75,7 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
       // Create transaction for log
       const logTransaction: Transaction = {
         id: `tx-${Math.random().toString(36).substring(2, 10)}`,
-        hash,
+        hash: txHash,
         type,
         from: fromAddress,
         to: toAddress,
@@ -121,33 +120,6 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     addTransactionRef.current = addTransaction
   }, [addTransaction])
-
-  // Auto-generate transactions for simulation
-  useEffect(() => {
-    const types: Transaction["type"][] = ["transfer", "swap", "mint", "burn", "stake"]
-
-    const generateTransaction = () => {
-      if (!addTransactionRef.current) return
-
-      const randomType = types[Math.floor(Math.random() * types.length)]
-      const randomValue = Math.random() * 1000 + 10
-      addTransactionRef.current(randomType, randomValue)
-    }
-
-    // Generate initial transactions
-    for (let i = 0; i < 5; i++) {
-      setTimeout(() => generateTransaction(), i * 200)
-    }
-
-    // Set up interval for ongoing transactions
-    intervalRef.current = setInterval(generateTransaction, 800)
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [])
 
   // Set up cleanup interval that works regardless of tab visibility
   useEffect(() => {
