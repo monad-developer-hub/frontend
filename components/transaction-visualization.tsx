@@ -254,6 +254,10 @@ export function TransactionVisualization() {
               <div className="h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-amber-500"></div>
               <span className="text-xs text-gray-400">Stake</span>
             </div>
+            <div className="flex items-center gap-1">
+              <div className="h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-gray-500"></div>
+              <span className="text-xs text-gray-400">Other</span>
+            </div>
           </div>
         </div>
       </div>

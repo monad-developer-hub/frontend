@@ -4,7 +4,7 @@ import type React from "react"
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react"
 
 interface AnalyticsStats {
-  totalTransactions: number
+  recentTransactions24h: number
   tps: number
   activeValidators: number
   blockHeight: number
@@ -12,30 +12,28 @@ interface AnalyticsStats {
 
 interface AnalyticsContextType {
   stats: AnalyticsStats
-  updateTotalTransactions: (value: number) => void
+  updateRecentTransactions24h: (value: number) => void
   updateTps: (value: number) => void
   updateActiveValidators: (value: number) => void
   updateBlockHeight: (value: number) => void
-  incrementTotalTransactions: (increment?: number) => void
+  incrementRecentTransactions24h: (increment?: number) => void
   incrementBlockHeight: (increment?: number) => void
 }
 
 const AnalyticsContext = createContext<AnalyticsContextType | undefined>(undefined)
 
 const initialStats: AnalyticsStats = {
-  totalTransactions: 1245678,
-  tps: 2450,
-  activeValidators: 128,
-  blockHeight: 3456789,
+  recentTransactions24h: 0,
+  tps: 0,
+  activeValidators: 99,
+  blockHeight: 0,
 }
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const [stats, setStats] = useState<AnalyticsStats>(initialStats)
-  const intervalRef = useRef<NodeJS.Timeout>()
-  const fastUpdateRef = useRef<NodeJS.Timeout>()
 
-  const updateTotalTransactions = useCallback((value: number) => {
-    setStats((prev) => ({ ...prev, totalTransactions: value }))
+  const updateRecentTransactions24h = useCallback((value: number) => {
+    setStats((prev) => ({ ...prev, recentTransactions24h: value }))
   }, [])
 
   const updateTps = useCallback((value: number) => {
@@ -50,74 +48,27 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     setStats((prev) => ({ ...prev, blockHeight: value }))
   }, [])
 
-  const incrementTotalTransactions = useCallback((increment = 1) => {
-    setStats((prev) => ({ ...prev, totalTransactions: prev.totalTransactions + increment }))
+  const incrementRecentTransactions24h = useCallback((increment = 1) => {
+    setStats((prev) => ({ ...prev, recentTransactions24h: prev.recentTransactions24h + increment }))
   }, [])
 
   const incrementBlockHeight = useCallback((increment = 1) => {
     setStats((prev) => ({ ...prev, blockHeight: prev.blockHeight + increment }))
   }, [])
 
-  // Fast updates for TPS and transactions
-  useEffect(() => {
-    fastUpdateRef.current = setInterval(() => {
-      setStats((prev) => {
-        // Simulate TPS fluctuation (1500-3500)
-        const newTps = Math.floor(Math.random() * 2000) + 1500
-
-        // Increment transactions by TPS amount (scaled for update frequency)
-        const txIncrement = Math.floor(newTps / 4) // Adjusted for 500ms interval
-
-        return {
-          ...prev,
-          tps: newTps,
-          totalTransactions: prev.totalTransactions + txIncrement,
-        }
-      })
-    }, 500) // Update TPS and transactions every 500ms
-
-    return () => {
-      if (fastUpdateRef.current) {
-        clearInterval(fastUpdateRef.current)
-      }
-    }
-  }, [])
-
-  // Slower updates for validators and block height
-  useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      setStats((prev) => {
-        // Simulate validator changes occasionally (120-135)
-        const validatorChange = Math.random() < 0.1 ? (Math.random() < 0.5 ? -1 : 1) : 0
-        const newValidators = Math.max(120, Math.min(135, prev.activeValidators + validatorChange))
-
-        // Increment block height (new block every ~1 second)
-        const blockIncrement = Math.random() < 0.7 ? 1 : 0
-
-        return {
-          ...prev,
-          activeValidators: newValidators,
-          blockHeight: prev.blockHeight + blockIncrement,
-        }
-      })
-    }, 1000) // Update validators and blocks every 1 second
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [])
+  // No more automatic updates - TPS and block height come from WebSocket hook
+  // Active validators is hardcoded to 99
+  // Total transactions is blurred/hidden
 
   return (
     <AnalyticsContext.Provider
       value={{
         stats,
-        updateTotalTransactions,
+        updateRecentTransactions24h,
         updateTps,
         updateActiveValidators,
         updateBlockHeight,
-        incrementTotalTransactions,
+        incrementRecentTransactions24h,
         incrementBlockHeight,
       }}
     >

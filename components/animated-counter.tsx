@@ -7,9 +7,10 @@ interface AnimatedCounterProps {
   duration?: number
   formatValue?: (value: number) => string
   className?: string
+  animationThreshold?: number
 }
 
-export function AnimatedCounter({ value, duration = 400, formatValue, className = "" }: AnimatedCounterProps) {
+export function AnimatedCounter({ value, duration = 400, formatValue, className = "", animationThreshold = 2 }: AnimatedCounterProps) {
   const [displayValue, setDisplayValue] = useState(value)
   const [isAnimating, setIsAnimating] = useState(false)
   const prevValueRef = useRef(value)
@@ -21,7 +22,7 @@ export function AnimatedCounter({ value, duration = 400, formatValue, className 
 
     // Only animate if the difference is significant
     const difference = value - prevValueRef.current
-    if (Math.abs(difference) < 2) {
+    if (Math.abs(difference) < animationThreshold) {
       setDisplayValue(value)
       prevValueRef.current = value
       return
@@ -57,7 +58,7 @@ export function AnimatedCounter({ value, duration = 400, formatValue, className 
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [value, duration])
+  }, [value, duration, animationThreshold])
 
   const formattedValue = formatValue ? formatValue(displayValue) : displayValue.toLocaleString()
 

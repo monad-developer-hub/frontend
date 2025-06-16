@@ -27,6 +27,7 @@ import {
   Send,
   Search,
   X,
+  Construction,
 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
@@ -821,28 +822,35 @@ export function ProjectTable() {
             />
 
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-4">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleLike(project.id)}
-                  disabled={likedProjects.has(project.id)}
-                  className="flex items-center gap-1 px-2 py-1 h-auto"
-                >
-                  <Heart 
-                    className={`h-3 w-3 transition-colors ${likedProjects.has(project.id) ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-400'}`} 
-                  />
-                  <span className="text-xs text-gray-400">{project.likes}</span>
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => openFeedbackDialog(project)}
-                  className="flex items-center gap-1 px-2 py-1 h-auto"
-                >
-                  <MessageSquare className="h-3 w-3 text-gray-400 hover:text-blue-400" />
-                  <span className="text-xs text-gray-400">{(feedbackData[project.id] || []).length}</span>
-                </Button>
+              <div className="flex items-center gap-4 relative">
+                {/* Blurred content */}
+                <div className="flex items-center gap-4 blur-sm filter">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    disabled={true}
+                    className="flex items-center gap-1 px-2 py-1 h-auto cursor-not-allowed"
+                  >
+                    <Heart className="h-3 w-3 text-gray-400" />
+                    <span className="text-xs text-gray-400">{project.likes}</span>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    disabled={true}
+                    className="flex items-center gap-1 px-2 py-1 h-auto cursor-not-allowed"
+                  >
+                    <MessageSquare className="h-3 w-3 text-gray-400" />
+                    <span className="text-xs text-gray-400">{(feedbackData[project.id] || []).length}</span>
+                  </Button>
+                </div>
+                {/* Under development overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80 rounded px-2">
+                  <div className="flex items-center gap-1">
+                    <Construction className="h-3 w-3 text-orange-500" />
+                    <span className="text-xs text-orange-400 font-medium"></span>
+                  </div>
+                </div>
               </div>
               <div className="flex -space-x-1">
                 {project.team.slice(0, 3).map((member, index) => (
@@ -999,28 +1007,35 @@ export function ProjectTable() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center justify-center gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleLike(project.id)}
-                        disabled={likedProjects.has(project.id)}
-                        className="flex items-center gap-1 px-2 py-1 h-auto"
-                      >
-                        <Heart 
-                          className={`h-3 w-3 transition-colors ${likedProjects.has(project.id) ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-400'}`} 
-                        />
-                        <span className="text-xs text-gray-400">{project.likes}</span>
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => openFeedbackDialog(project)}
-                        className="flex items-center gap-1 px-2 py-1 h-auto"
-                      >
-                        <MessageSquare className="h-3 w-3 text-gray-400 hover:text-blue-400" />
-                        <span className="text-xs text-gray-400">{(feedbackData[project.id] || []).length}</span>
-                      </Button>
+                    <div className="relative">
+                      {/* Blurred content */}
+                      <div className="flex items-center justify-center gap-1 blur-sm filter">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          disabled={true}
+                          className="flex items-center gap-1 px-2 py-1 h-auto cursor-not-allowed"
+                        >
+                          <Heart className="h-3 w-3 text-gray-400" />
+                          <span className="text-xs text-gray-400">{project.likes}</span>
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          disabled={true}
+                          className="flex items-center gap-1 px-2 py-1 h-auto cursor-not-allowed"
+                        >
+                          <MessageSquare className="h-3 w-3 text-gray-400" />
+                          <span className="text-xs text-gray-400">{(feedbackData[project.id] || []).length}</span>
+                        </Button>
+                      </div>
+                      {/* Under development overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80 rounded">
+                        <div className="flex flex-col items-center gap-1">
+                          <Construction className="h-4 w-4 text-orange-500" />
+                          <span className="text-xs text-orange-400 font-medium"></span>
+                        </div>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>

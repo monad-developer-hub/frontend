@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { TrendingUp, TrendingDown, Activity, Users, Crown, Trophy, Medal, RefreshCw } from "lucide-react"
+import { TrendingUp, TrendingDown, Activity, Users, Crown, Trophy, Medal, RefreshCw, Construction } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 
 interface ContractData {
@@ -131,100 +131,111 @@ export function TopContracts() {
   }
 
   return (
-    <Card className="border-gray-800 bg-gray-950 h-[500px] flex flex-col">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Activity className="h-4 w-4" />
-            Most Active Contracts (24h)
-          </CardTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={refreshData}
-            disabled={isRefreshing}
-            className="h-8 w-8 text-gray-400 hover:text-white"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
-            <span className="sr-only">Refresh data</span>
-          </Button>
-        </div>
-        {contracts.length > 0 && (
-          <p className="text-xs text-gray-400">
-            Last updated: {formatDistanceToNow(contracts[0].lastUpdated, { addSuffix: true })}
-          </p>
-        )}
-      </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto space-y-2 px-4 pb-4">
-        {contracts.slice(0, 10).map((contract, index) => {
-          const rankStyle = getRankNumberStyle(index)
+    <Card className="border-gray-800 bg-gray-950 h-[500px] flex flex-col relative overflow-hidden">
+      {/* Under Development Overlay */}
+      <div className="absolute top-3 right-3 z-20">
+        <Badge variant="outline" className="bg-orange-500/20 border-orange-500 text-orange-400 text-[10px] px-1.5 py-0.5 flex items-center gap-1">
+          <Construction className="h-2.5 w-2.5" />
+          Under Development
+        </Badge>
+      </div>
 
-          return (
-            <div
-              key={contract.id}
-              className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900 p-2 transition-colors hover:bg-gray-800"
+      {/* Blurred Content */}
+      <div className="blur-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Activity className="h-4 w-4" />
+              Most Active Contracts (24h)
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={refreshData}
+              disabled={isRefreshing}
+              className="h-8 w-8 text-gray-400 hover:text-white"
             >
-              <div className="flex items-center gap-2">
-                <div
-                  className={`flex h-6 w-6 items-center justify-center rounded text-xs font-bold ${rankStyle.textColor}`}
-                  style={{
-                    background: rankStyle.background,
-                  }}
-                >
-                  {rankStyle.icon || index + 1}
-                </div>
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={contract.logo || "/placeholder.svg"} alt={contract.name} />
-                  <AvatarFallback className="text-xs">{contract.name.substring(0, 2)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="flex flex-wrap items-center gap-1">
-                    <h4 className="text-sm font-medium text-white">{contract.name}</h4>
-                    <Badge variant="outline" className="text-xs px-1 py-0 hidden sm:inline-flex">
-                      {contract.category}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-gray-400 font-mono hidden sm:block">{truncateAddress(contract.address)}</p>
-                </div>
-              </div>
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+              <span className="sr-only">Refresh data</span>
+            </Button>
+          </div>
+          {contracts.length > 0 && (
+            <p className="text-xs text-gray-400">
+              Last updated: {formatDistanceToNow(contracts[0].lastUpdated, { addSuffix: true })}
+            </p>
+          )}
+        </CardHeader>
+        <CardContent className="flex-1 overflow-y-auto space-y-2 px-4 pb-4">
+          {contracts.slice(0, 10).map((contract, index) => {
+            const rankStyle = getRankNumberStyle(index)
 
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <div className="flex items-center gap-1 text-xs">
-                    <Activity className="h-3 w-3" />
-                    <span className="font-medium">{formatNumber(contract.txCount)}</span>
-                  </div>
-                  <p className="text-xs text-gray-400">txs</p>
-                </div>
-
-                <div className="text-right hidden sm:block">
-                  <div className="flex items-center gap-1 text-xs">
-                    <Users className="h-3 w-3" />
-                    <span className="font-medium">{formatNumber(contract.uniqueWallets)}</span>
-                  </div>
-                  <p className="text-xs text-gray-400">wallets</p>
-                </div>
-
-                <div className="text-right">
+            return (
+              <div
+                key={contract.id}
+                className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900 p-2 transition-colors hover:bg-gray-800"
+              >
+                <div className="flex items-center gap-2">
                   <div
-                    className={`flex items-center gap-1 text-xs ${
-                      contract.change24h >= 0 ? "text-green-500" : "text-red-500"
-                    }`}
+                    className={`flex h-6 w-6 items-center justify-center rounded text-xs font-bold ${rankStyle.textColor}`}
+                    style={{
+                      background: rankStyle.background,
+                    }}
                   >
-                    {contract.change24h >= 0 ? (
-                      <TrendingUp className="h-3 w-3" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3" />
-                    )}
-                    <span className="font-medium">{Math.abs(contract.change24h).toFixed(1)}%</span>
+                    {rankStyle.icon || index + 1}
                   </div>
-                  <p className="text-xs text-gray-400">24h</p>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={contract.logo || "/placeholder.svg"} alt={contract.name} />
+                    <AvatarFallback className="text-xs">{contract.name.substring(0, 2)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-1">
+                      <h4 className="text-sm font-medium text-white">{contract.name}</h4>
+                      <Badge variant="outline" className="text-xs px-1 py-0 hidden sm:inline-flex">
+                        {contract.category}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-gray-400 font-mono hidden sm:block">{truncateAddress(contract.address)}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className="flex items-center gap-1 text-xs">
+                      <Activity className="h-3 w-3" />
+                      <span className="font-medium">{formatNumber(contract.txCount)}</span>
+                    </div>
+                    <p className="text-xs text-gray-400">txs</p>
+                  </div>
+
+                  <div className="text-right hidden sm:block">
+                    <div className="flex items-center gap-1 text-xs">
+                      <Users className="h-3 w-3" />
+                      <span className="font-medium">{formatNumber(contract.uniqueWallets)}</span>
+                    </div>
+                    <p className="text-xs text-gray-400">wallets</p>
+                  </div>
+
+                  <div className="text-right">
+                    <div
+                      className={`flex items-center gap-1 text-xs ${
+                        contract.change24h >= 0 ? "text-green-500" : "text-red-500"
+                      }`}
+                    >
+                      {contract.change24h >= 0 ? (
+                        <TrendingUp className="h-3 w-3" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3" />
+                      )}
+                      <span className="font-medium">{Math.abs(contract.change24h).toFixed(1)}%</span>
+                    </div>
+                    <p className="text-xs text-gray-400">24h</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )
-        })}
-      </CardContent>
+            )
+          })}
+        </CardContent>
+      </div>
     </Card>
   )
 }

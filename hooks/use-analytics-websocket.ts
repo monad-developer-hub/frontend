@@ -52,7 +52,7 @@ export function useAnalyticsWebSocket(): UseAnalyticsWebSocketReturn {
         }
 
         ws.onmessage = (event) => {
-          console.log('Received data from analytics WebSocket:', event.data)
+          // console.log('Received data from analytics WebSocket:', event.data)
           try {
             const parsedData = JSON.parse(event.data)
             // Call all registered callbacks immediately
