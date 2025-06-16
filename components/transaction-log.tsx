@@ -58,7 +58,7 @@ export function TransactionLog() {
                   <TableCell className="font-mono text-xs py-2 hidden sm:table-cell">
                     {truncateAddress(tx.to)}
                   </TableCell>
-                  <TableCell className="text-xs py-2">{tx.value.toFixed(2)} MONAD</TableCell>
+                  <TableCell className="text-xs py-2">{tx.value.toFixed(2)} MON</TableCell>
                   <TableCell className="text-right text-xs text-gray-400 py-2">
                     {formatDistanceToNow(tx.timestamp, { addSuffix: true })}
                   </TableCell>

@@ -94,7 +94,12 @@ export function Header({ activeTab }: HeaderProps) {
               </svg>
             </Button>
 
-            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
+            <Button 
+              onClick={() => window.open('https://github.com/monad-developer-hub', '_blank')} 
+              variant="ghost" 
+              size="icon" 
+              className="text-gray-400 hover:text-white"
+            >
               <Github className="h-5 w-5" />
               <span className="sr-only">GitHub</span>
             </Button>
@@ -197,7 +202,7 @@ export function Header({ activeTab }: HeaderProps) {
                     </li>
                     <li>
                       <Link
-                        href="https://github.com"
+                        href="https://github.com/monad-developer-hub"
                         target="_blank"
                         className="block py-2 px-4 rounded-md text-gray-300 hover:bg-gray-900"
                       >
