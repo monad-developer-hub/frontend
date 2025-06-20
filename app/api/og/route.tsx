@@ -58,7 +58,7 @@ export async function GET() {
             lineHeight: 1.4,
           }}
         >
-          BUILT. ON. MONAD !
+          BUILD. ON. MONAD !
         </div>
         <span
           style={{

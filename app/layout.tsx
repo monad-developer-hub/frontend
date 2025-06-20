@@ -24,7 +24,7 @@ export const metadata = {
         url: '/api/og',
         width: 1200,
         height: 630,
-        alt: 'Monad Developer Hub - Built on Monad',
+        alt: 'Monad Developer Hub - Build on Monad',
       },
     ],
     locale: 'en_US',
@@ -37,7 +37,7 @@ export const metadata = {
     images: ['/api/og'],
     creator: '@0xKadzu',
   },
-}
+ }
 
 export default function RootLayout({
   children,
