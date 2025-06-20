@@ -14,6 +14,9 @@ export const metadata = {
   description: "Discover and explore projects built by the Monad community",
   generator: '-',
   metadataBase: new URL('https://devhub.kadzu.dev'),
+  icons: {
+    icon: '/favicon.png',
+  },
   openGraph: {
     title: "Monad Developer Hub",
     description: "Discover and explore projects built by the Monad community",
